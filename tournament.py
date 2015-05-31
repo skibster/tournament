@@ -68,11 +68,9 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    number_of_pairs = countPlayers() / 2
-    
     conn = connect()
     c = conn.cursor()
-    c.execute("SELECT players.id, players.name, COUNT(matches.winner) AS wins, COUNT(matches.id) AS games FROM players LEFT JOIN matches ON (players.id=matches.p1 OR players.id=matches.p2) GROUP BY players.id ORDER BY wins DESC;")
+    c.execute("SELECT players.id, players.name, (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner) AS wins, (SELECT COUNT(*) FROM matches WHERE players.id = matches.p1 OR players.id = matches.p2) AS matches FROM players ORDER BY wins DESC;")
     standings = c.fetchall()
     conn.close()
     return standings
@@ -85,8 +83,13 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    conn = connect()
+    c = conn.cursor()
+    c.execute("INSERT INTO matches (p1, p2, winner) VALUES (%s, %s, %s);", (winner,loser,winner,))
+    conn.commit()
+    conn.close()
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
   
@@ -102,5 +105,11 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    swissPairings = []
+    player_list = playerStandings()
+    for i in xrange(0, len(player_list), 2):
+        swissPairings.append((player_list[i][0], player_list[i][1], player_list[i+1][0], player_list[i+1][1]))
+    return swissPairings
+
 
 
