@@ -13,14 +13,30 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    conn = connect()
+    c = conn.cursor()
+    c.execute("DELETE FROM matches;")
+    conn.commit()
+    conn.close
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
+    conn = connect()
+    c = conn.cursor()
+    c.execute("DELETE FROM players;")
+    conn.commit()
+    conn.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    conn = connect()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM players;")
+    number_of_players = c.fetchall()
+    conn.close()
+    return number_of_players[0][0]
 
 
 def registerPlayer(name):
@@ -32,6 +48,11 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    conn = connect()
+    c = conn.cursor()
+    c.execute("INSERT INTO players (name) VALUES (%s);", (name,) )
+    conn.commit()
+    conn.close()
 
 
 def playerStandings():
@@ -47,6 +68,14 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    number_of_pairs = countPlayers() / 2
+    
+    conn = connect()
+    c = conn.cursor()
+    c.execute("SELECT players.id, players.name, COUNT(matches.winner) AS wins, COUNT(matches.id) AS games FROM players LEFT JOIN matches ON (players.id=matches.p1 OR players.id=matches.p2) GROUP BY players.id ORDER BY wins DESC;")
+    standings = c.fetchall()
+    conn.close()
+    return standings
 
 
 def reportMatch(winner, loser):
