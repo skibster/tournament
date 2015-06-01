@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# 
-# tournament.py -- implementation of a Swiss-system tournament
 #
+"""Tournament.py is a Python implementation of a Swiss-system tournament"""
 
 import psycopg2
 
@@ -41,16 +40,16 @@ def countPlayers():
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
     conn = connect()
     c = conn.cursor()
-    c.execute("INSERT INTO players (name) VALUES (%s);", (name,) )
+    c.execute("INSERT INTO players (name) VALUES (%s);", (name,))
     conn.commit()
     conn.close()
 
@@ -70,7 +69,9 @@ def playerStandings():
     """
     conn = connect()
     c = conn.cursor()
-    c.execute("SELECT players.id, players.name, (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner) AS wins, (SELECT COUNT(*) FROM matches WHERE players.id = matches.p1 OR players.id = matches.p2) AS matches FROM players ORDER BY wins DESC;")
+    # player_standings is a PostgreSQL View
+    # see tournament.sql for details
+    c.execute("SELECT * FROM player_standings")
     standings = c.fetchall()
     conn.close()
     return standings
@@ -85,19 +86,20 @@ def reportMatch(winner, loser):
     """
     conn = connect()
     c = conn.cursor()
-    c.execute("INSERT INTO matches (p1, p2, winner) VALUES (%s, %s, %s);", (winner,loser,winner,))
+    c.execute("INSERT INTO matches (player1, player2, winner) \
+              VALUES (%s, %s, %s);", (winner, loser, winner))
     conn.commit()
     conn.close()
 
 
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
-  
+
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-  
+
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -105,11 +107,18 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    swissPairings = []
     player_list = playerStandings()
+
+    # the for loop increments by 2 so that it can build pairs of oppenents for a round.
+    # players [0] and player[1] are paired for a match,
+    # player [2] and player[3] are paired for a match, etc.
+    # the pairs are appended to the empty list pairings
+    pairings = []
     for i in xrange(0, len(player_list), 2):
-        swissPairings.append((player_list[i][0], player_list[i][1], player_list[i+1][0], player_list[i+1][1]))
-    return swissPairings
+        player_id1 = player_list[i][0]
+        player_name1 = player_list[i][1]
+        player_id2 = player_list[i+1][0]
+        player_name2 = player_list[i+1][1]
 
-
-
+        pairings.append((player_id1, player_name1, player_id2, player_name2))
+    return pairings
