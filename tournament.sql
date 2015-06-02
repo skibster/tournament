@@ -9,12 +9,24 @@ CREATE DATABASE tournament;
 -- connect to newly created database
 \c tournament;
 
+-- create event table to differenciate multiple tournaments
+-- without having to delete players from database
+--   a column for an event's id (id)
+--   a column for an event's name (name)
+CREATE TABLE events (
+  id serial,
+  name text UNIQUE,
+  PRIMARY KEY (id)
+  );
+
 -- create player table which consists of
 --   a column for a player's id (id)
 --   a column for a player's full name (name)
+--   a column for an event for which the player is registering (event_id)
 CREATE TABLE players (
   id serial,
   name text,
+  event_id integer,
   PRIMARY KEY (id)
   );
 
@@ -37,6 +49,7 @@ CREATE TABLE matches (
 CREATE VIEW player_standings AS
   SELECT players.id,
          players.name,
-         (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner) AS wins,
-         (SELECT COUNT(*) FROM matches WHERE players.id = matches.player1 OR players.id = matches.player2) AS matches
-         FROM players ORDER BY wins DESC;
+         (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner and events.id=players.event_id) AS wins,
+         (SELECT COUNT(*) FROM matches WHERE events.id=players.event_id and 
+           (players.id = matches.player1 OR players.id = matches.player2)) AS matches
+         FROM events, players ORDER BY wins DESC;

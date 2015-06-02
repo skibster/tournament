@@ -20,11 +20,13 @@ def testDeletePlayers():
     print "2. Player records can be deleted."
 
 
-def testCreateEvent():
-    createEvent('My event!', 2)
+def testCreateEvent(name):
+    createEvent(name)
 
+def testGetEvent(name):
+    return getEvent(name)
 
-def testCount(event_id = 2):
+def testCount(event_id):
     deleteMatches()
     deletePlayers()
     c = countPlayers(event_id)
@@ -36,10 +38,10 @@ def testCount(event_id = 2):
     print "3. After deleting, countPlayers() returns zero."
 
 
-def testRegister(event_id = 2):
+def testRegister(event_id):
     deleteMatches()
     deletePlayers()
-    registerPlayer("Chandra Nalaar", 2)
+    registerPlayer("Chandra Nalaar", event_id)
     c = countPlayers(event_id)
     if c != 1:
         raise ValueError(
@@ -47,7 +49,7 @@ def testRegister(event_id = 2):
     print "4. After registering a player, countPlayers() returns 1."
 
 
-def testRegisterCountDelete(event_id = 2):
+def testRegisterCountDelete(event_id):
     deleteMatches()
     deletePlayers()
     registerPlayer("Markov Chaney", event_id)
@@ -65,7 +67,7 @@ def testRegisterCountDelete(event_id = 2):
     print "5. Players can be registered and deleted."
 
 
-def testStandingsBeforeMatches(event_id = 2):
+def testStandingsBeforeMatches(event_id):
     deleteMatches()
     deletePlayers()
     registerPlayer("Melpomene Murray", event_id)
@@ -88,7 +90,7 @@ def testStandingsBeforeMatches(event_id = 2):
     print "6. Newly registered players appear in the standings with no matches."
 
 
-def testReportMatches(event_id = 2):
+def testReportMatches(event_id):
     deleteMatches()
     deletePlayers()
     registerPlayer("Bruno Walton", event_id)
@@ -110,7 +112,7 @@ def testReportMatches(event_id = 2):
     print "7. After a match, players have updated standings."
 
 
-def testPairings(event_id = 2):
+def testPairings(event_id):
     deleteMatches()
     deletePlayers()
     registerPlayer("Twilight Sparkle", event_id)
@@ -138,13 +140,15 @@ if __name__ == '__main__':
     testDeleteEvents()
     testDeleteMatches()
     testDeletePlayers()
-    testCreateEvent()
-    testCount()
-    testRegister()
-    testRegisterCountDelete()
-    testStandingsBeforeMatches()
-    testReportMatches()
-    testPairings()
+    event_name = "My Cool Event!"
+    testCreateEvent(event_name)
+    event = testGetEvent(event_name)
+    testCount(event)
+    testRegister(event)
+    testRegisterCountDelete(event)
+    testStandingsBeforeMatches(event)
+    testReportMatches(event)
+    testPairings(event)
     print "Success!  All tests pass!"
 
 
