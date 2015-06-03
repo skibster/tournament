@@ -1,14 +1,14 @@
 # tournament
-Project 2: Udacity Swiss Tournament Results
+Project 2: Udacity Swiss Tournament Results  
 
-# This project runs a set of tests in a preconfigured virtual machine environment.
-# To install the virtual machine environment, you will install Git, Virtual Box and Vagrant. Detailed installation instructions can be found here: https://www.udacity.com/wiki/ud197/install-vagrant
-# Download this tournament repository and place it in your /vagrant directory.
-# In your terminal, run the following commands:  
-## vagrant up  
-## vagrant ssh  
-## cd /vagrant/tournament  
-## python tournament_test_extra.py (this is a special version of the test file to support extra credit)  
+1. This project runs a set of tests in a preconfigured virtual machine environment.
+2. To install the virtual machine environment, you will install Git, Virtual Box and Vagrant. Detailed installation instructions can be found here: https://www.udacity.com/wiki/ud197/install-vagrant
+3. Download this tournament repository and place it in your /vagrant directory.
+4. In your terminal, run the following commands:  
+  * vagrant up  
+  * vagrant ssh  
+  * cd /vagrant/tournament  
+  * python tournament_test_extra.py (this is a special version of the test file to support extra credit)  
 
 Results:
 The test results should be as show below:  
