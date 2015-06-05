@@ -5,36 +5,31 @@
 import psycopg2
 
 
-def connect():
+def connect(database_name="tournament"):
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
-
-
-def deleteEvents():
-    """Remove all the event records from the database."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("DELETE FROM events;")
-    conn.commit()
-    conn.close()
+    try:
+        db = psycopg2.connect("dbname={}".format(database_name))
+        cursor = db.cursor()
+        return db, cursor
+    except:
+        print("<error message>")
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("DELETE FROM matches;")
-    conn.commit()
-    conn.close
+    db, cursor = connect()
+    cursor.execute("TRUNCATE matches;")
+    db.commit()
+    db.close
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("DELETE FROM players;")
-    conn.commit()
-    conn.close()
+    db, cursor = connect()
+    query = "DELETE FROM players;"
+    cursor.execute(query)
+    db.commit()
+    db.close()
 
 
 def createEvent(name):
@@ -46,11 +41,12 @@ def createEvent(name):
     Args:
       name: the event's name (must be unique).
     """
-    conn = connect()
-    c = conn.cursor()
-    c.execute("INSERT INTO events (name) VALUES (%s);", (name,))
-    conn.commit()
-    conn.close()
+    db, cursor = connect()
+    query = "INSERT INTO events (name) VALUES (%s);"
+    param = (name,)
+    cursor.execute(query, param)
+    db.commit()
+    db.close()
 
 
 def getEvent(name):
@@ -58,26 +54,28 @@ def getEvent(name):
 
     Args:
       name: the event's name.
-      
+
     Returns:
       The event id.
-      
+
     """
-    conn = connect()
-    c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE name = %s;", (name,))
-    event_id = c.fetchall()
-    conn.close()
+    db, cursor = connect()
+    query = "SELECT id FROM events WHERE name = %s;"
+    param = (name,)
+    cursor.execute(query, param)
+    event_id = cursor.fetchall()
+    db.close()
     return event_id[0][0]
 
 
 def countPlayers(event_id):
     """Returns the number of players currently registered."""
-    conn = connect()
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM players WHERE players.event_id = %s;", (event_id,))
-    number_of_players = c.fetchall()
-    conn.close()
+    db, cursor = connect()
+    query = "SELECT COUNT(*) FROM players WHERE players.event_id = %s;"
+    param = (event_id,)
+    cursor.execute(query, param)
+    number_of_players = cursor.fetchall()
+    db.close()
     return number_of_players[0][0]
 
 
@@ -91,18 +89,19 @@ def registerPlayer(name, event_id):
       name:     the player's full name (need not be unique).
       event_id: the id of the event for which the player is registering
     """
-    conn = connect()
-    c = conn.cursor()
-    c.execute("INSERT INTO players (name, event_id) VALUES (%s, %s);", (name, event_id))
-    conn.commit()
-    conn.close()
+    db, cursor = connect()
+    query = "INSERT INTO players (name, event_id) VALUES (%s, %s);"
+    param = (name, event_id)
+    cursor.execute(query, param)
+    db.commit()
+    db.close()
 
 
-def playerStandings(event_id):
+def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
 
-    The first entry in the list should be the player in first place, or a player
-    tied for first place if there is currently a tie.
+    The first entry in the list should be the player in first place, or a
+    player tied for first place if there is currently a tie.
 
     Args:
       event_id: the id of the event
@@ -114,29 +113,30 @@ def playerStandings(event_id):
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    conn = connect()
-    c = conn.cursor()
+    db, cursor = connect()
     # player_standings is a PostgreSQL View
     # see tournament.sql for details
-    c.execute("SELECT * FROM player_standings")
-    standings = c.fetchall()
-    conn.close()
+    query = "SELECT * FROM player_standings"
+    cursor.execute(query)
+    standings = cursor.fetchall()
+    db.close()
     return standings
 
 
-def reportMatch(winner, loser):
+def reportMatch(winner, loser, event_id):
     """Records the outcome of a single match between two players.
 
     Args:
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    conn = connect()
-    c = conn.cursor()
-    c.execute("INSERT INTO matches (player1, player2, winner) \
-              VALUES (%s, %s, %s);", (winner, loser, winner))
-    conn.commit()
-    conn.close()
+    db, cursor = connect()
+    query = "INSERT INTO matches (player1, player2, winner, event_id) \
+              VALUES (%s, %s, %s, %s);"
+    param = (winner, loser, winner, event_id)
+    cursor.execute(query, param)
+    db.commit()
+    db.close()
 
 
 def swissPairings(event_id):
@@ -157,18 +157,13 @@ def swissPairings(event_id):
         id2: the second player's unique id
         name2: the second player's name
     """
-    player_list = playerStandings(event_id)
+    player_list = playerStandings()
 
-    # the for loop increments by 2 so that it can build pairs of oppenents for a round.
-    # players [0] and player[1] are paired for a match,
-    # player [2] and player[3] are paired for a match, etc.
+    # the for loop increments by 2 so that it can
+    # build pairs of oppenents for a round.
     # the pairs are appended to the empty list pairings
     pairings = []
     for i in xrange(0, len(player_list), 2):
-        player_id1 = player_list[i][0]
-        player_name1 = player_list[i][1]
-        player_id2 = player_list[i+1][0]
-        player_name2 = player_list[i+1][1]
-
-        pairings.append((player_id1, player_name1, player_id2, player_name2))
+        z = zip(player_list[i], player_list[i + 1])
+        pairings.append((z[0][0], z[1][0], z[0][1], z[1][1]))
     return pairings

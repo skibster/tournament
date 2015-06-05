@@ -2,11 +2,8 @@
 #
 # Test cases for tournament.py
 
+import uuid
 from tournament import *
-
-def testDeleteEvents():
-    deleteEvents()
-    print "0. Events can be deleted."
 
 
 def testDeleteMatches():
@@ -23,8 +20,10 @@ def testDeletePlayers():
 def testCreateEvent(name):
     createEvent(name)
 
+
 def testGetEvent(name):
     return getEvent(name)
+
 
 def testCount(event_id):
     deleteMatches()
@@ -72,10 +71,10 @@ def testStandingsBeforeMatches(event_id):
     deletePlayers()
     registerPlayer("Melpomene Murray", event_id)
     registerPlayer("Randy Schwartz", event_id)
-    standings = playerStandings(event_id)
+    standings = playerStandings()
     if len(standings) < 2:
-        raise ValueError("Players should appear in playerStandings even before "
-                         "they have played any matches.")
+        raise ValueError("Players should appear in playerStandings even before"
+                         " they have played any matches.")
     elif len(standings) > 2:
         raise ValueError("Only registered players should appear in standings.")
     if len(standings[0]) != 4:
@@ -85,9 +84,10 @@ def testStandingsBeforeMatches(event_id):
         raise ValueError(
             "Newly registered players should have no matches or wins.")
     if set([name1, name2]) != set(["Melpomene Murray", "Randy Schwartz"]):
-        raise ValueError("Registered players' names should appear in standings, "
-                         "even if they have no matches played.")
-    print "6. Newly registered players appear in the standings with no matches."
+        raise ValueError("Registered players' names should appear in "
+                         "standings, even if they have no matches played.")
+    print ("6. Newly registered players appear in the standings "
+           "with no matches.")
 
 
 def testReportMatches(event_id):
@@ -97,18 +97,19 @@ def testReportMatches(event_id):
     registerPlayer("Boots O'Neal", event_id)
     registerPlayer("Cathy Burton", event_id)
     registerPlayer("Diane Grant", event_id)
-    standings = playerStandings(event_id)
+    standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
-    standings = playerStandings(event_id)
+    reportMatch(id1, id2, event_id)
+    reportMatch(id3, id4, event_id)
+    standings = playerStandings()
     for (i, n, w, m) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
         if i in (id1, id3) and w != 1:
             raise ValueError("Each match winner should have one win recorded.")
         elif i in (id2, id4) and w != 0:
-            raise ValueError("Each match loser should have zero wins recorded.")
+            raise ValueError("Each match loser should have "
+                             "zero wins recorded.")
     print "7. After a match, players have updated standings."
 
 
@@ -118,11 +119,11 @@ def testPairings(event_id):
     registerPlayer("Twilight Sparkle", event_id)
     registerPlayer("Fluttershy", event_id)
     registerPlayer("Applejack", event_id)
-    registerPlayer("Pinkie Pie", event_id )
-    standings = playerStandings(event_id)
+    registerPlayer("Pinkie Pie", event_id)
+    standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    reportMatch(id1, id2, event_id)
+    reportMatch(id3, id4, event_id)
     pairings = swissPairings(event_id)
     if len(pairings) != 2:
         raise ValueError(
@@ -137,10 +138,9 @@ def testPairings(event_id):
 
 
 if __name__ == '__main__':
-    testDeleteEvents()
     testDeleteMatches()
     testDeletePlayers()
-    event_name = "My Cool Event!"
+    event_name = str(uuid.uuid4())
     testCreateEvent(event_name)
     event = testGetEvent(event_name)
     testCount(event)
@@ -150,5 +150,3 @@ if __name__ == '__main__':
     testReportMatches(event)
     testPairings(event)
     print "Success!  All tests pass!"
-
-

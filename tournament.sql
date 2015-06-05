@@ -35,21 +35,38 @@ CREATE TABLE players (
 --   a column for the player id of the first oppenent, e.g., home team (player1)
 --   a column for the player id of the second oppenent, e.g., away team (player2)
 --   a column for the winner of the match (winner)
+--   a column for an event for which the player is registering (event_id)
 CREATE TABLE matches (
   id serial,
   player1 integer references players,
   player2 integer references players,
   winner integer references players,
+  event_id integer references events,
   PRIMARY KEY (id)
   );
 
--- The player_standings view returns a table that contains a row for each player
--- sorted by wins where the first row is the player with the most wins or is tied with the most wins.
--- The table contains columns for each player's [id], [name], number of [wins] and number of [matches]-- played.
+-- the match_numbers view returns a table with columns for
+-- player id, player name, and no_of_matches for each player:
+CREATE VIEW match_numbers AS
+  SELECT players.id, players.name, COUNT(matches.*) as no_of_matches
+  FROM players LEFT JOIN matches ON
+  players.event_id=matches.event_id AND
+  (players.id=matches.player1 OR players.id=matches.player2)
+  GROUP BY players.id ORDER BY players.id;
+
+
+-- the match_wins view returns a table with column for
+-- player id and no_of_wins for each player:
+CREATE VIEW match_wins AS
+  SELECT players.id, COUNT(matches.*) AS no_of_wins
+  FROM players LEFT JOIN matches ON
+  players.id=matches.winner
+  GROUP BY players.id ORDER BY players.id;
+
+
+-- the player_standings view returns a table with columns for
+-- player id, player name, number of wins and number of matches for each player:
 CREATE VIEW player_standings AS
-  SELECT players.id,
-         players.name,
-         (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner and events.id=players.event_id) AS wins,
-         (SELECT COUNT(*) FROM matches WHERE events.id=players.event_id and 
-           (players.id = matches.player1 OR players.id = matches.player2)) AS matches
-         FROM events, players ORDER BY wins DESC;
+  SELECT match_numbers.id, match_numbers.name, match_wins.no_of_wins, match_numbers.no_of_matches
+  FROM match_numbers, match_wins
+  WHERE match_numbers.id=match_wins.id ORDER BY match_wins.no_of_wins DESC;
